@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local SQLite database (auto-created on first request)
+/data/*.db
+/data/*.db-journal
+/data/*.db-wal
+
+# keep the env template committed (.env* above would hide it)
+!.env.example
