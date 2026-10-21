@@ -26,13 +26,20 @@ const optionalEmail = (error: string) =>
     .string()
     .default("")
     .transform((value) => value.trim())
-    .refine((value) => value === "" || z.email().safeParse(value).success, { error });
+    .refine((value) => value === "" || z.email().safeParse(value).success, {
+      error,
+    });
 
 const isoDate = (error: string) =>
-  z.string({ error }).refine(
-    (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)),
-    { error },
-  );
+  z
+    .string({ error })
+    .refine(
+      (value) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+        !Number.isNaN(Date.parse(value)) &&
+        new Date(value).toISOString().slice(0, 10) === value,
+      { error },
+    );
 
 /** Accepts what people actually type into a money field, including "$1,250.00". */
 function parseAmount(raw: string | number, blankIsZero: boolean): number {
@@ -44,7 +51,11 @@ function parseAmount(raw: string | number, blankIsZero: boolean): number {
   return /^-?\d*\.?\d+$/.test(cleaned) ? Number(cleaned) : Number.NaN;
 }
 
-const amount = (options: { blankIsZero: boolean; invalid: string; negative: string }) =>
+const amount = (options: {
+  blankIsZero: boolean;
+  invalid: string;
+  negative: string;
+}) =>
   z
     .union([z.string(), z.number()], { error: options.invalid })
     .transform((raw) => parseAmount(raw, options.blankIsZero))
@@ -52,6 +63,7 @@ const amount = (options: { blankIsZero: boolean; invalid: string; negative: stri
       z
         .number({ error: options.invalid })
         .nonnegative({ error: options.negative })
+        .max(1_000_000, { error: "Enter a value no greater than 1,000,000." })
         .refine(Number.isFinite, { error: options.invalid }),
     );
 
@@ -83,19 +95,26 @@ export const invoiceSchema = z
     business: z.object({
       name: optionalText,
       address: optionalText,
-      email: optionalEmail("Enter a valid email address, like studio@example.com."),
+      email: optionalEmail(
+        "Enter a valid email address, like studio@example.com.",
+      ),
       phone: optionalText,
     }),
     customer: z.object({
       name: requiredText("Who is this invoice for?"),
       address: optionalText,
-      email: optionalEmail("Enter a valid email address, like billing@example.com."),
+      email: optionalEmail(
+        "Enter a valid email address, like billing@example.com.",
+      ),
     }),
     invoiceNumber: requiredText("Give the invoice a number, like QQ-0041."),
     issueDate: isoDate("Pick an issue date."),
     dueDate: isoDate("Pick a due date."),
     notes: optionalText,
-    lineItems: z.array(lineItemSchema).min(1, { error: "Add at least one line item." }),
+    lineItems: z
+      .array(lineItemSchema)
+      .min(1, { error: "Add at least one line item." })
+      .max(100, { error: "Use no more than 100 line items per invoice." }),
     discount: amount({
       blankIsZero: true,
       invalid: "Enter a discount, like 10 or 10.50.",
@@ -109,7 +128,24 @@ export const invoiceSchema = z
     customFields: z.array(customFieldSchema).default([]),
   })
   .superRefine((invoice, ctx) => {
-    const { subtotalCents, discountCents } = calculateTotals(invoice);
+    const totals = calculateTotals(invoice);
+    const { subtotalCents, discountCents } = totals;
+
+    if (
+      ![
+        ...totals.lineTotalsCents,
+        totals.subtotalCents,
+        totals.taxCents,
+        totals.grandTotalCents,
+      ].every(Number.isSafeInteger)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["lineItems"],
+        message:
+          "The total is too large. Reduce the quantities, prices, or tax rate.",
+      });
+    }
 
     if (discountCents > subtotalCents) {
       ctx.addIssue({

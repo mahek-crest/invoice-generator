@@ -28,5 +28,6 @@ export function centsToInput(cents: number): string {
 export function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-").map(Number);
   if (!year || !month || !day) return "";
-  return longDate.format(new Date(year, month - 1, day));
+  const date = new Date(year, month - 1, day);
+  return Number.isFinite(date.getTime()) ? longDate.format(date) : "";
 }

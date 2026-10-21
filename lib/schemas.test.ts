@@ -27,7 +27,7 @@ describe("invoiceSchema", () => {
       draft({
         discount: "$1,000.50",
         taxRate: "7",
-        lineItems: [{ id: "a", description: "Proofing", quantity: "2", unitPrice: "50.00" }],
+        lineItems: [{ id: "a", description: "Proofing", quantity: "2", unitPrice: "750.00" }],
       }),
     );
 

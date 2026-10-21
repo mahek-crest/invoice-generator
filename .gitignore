@@ -47,3 +47,4 @@ next-env.d.ts
 
 # keep the env template committed (.env* above would hide it)
 !.env.example
+/data/*.db-shm
