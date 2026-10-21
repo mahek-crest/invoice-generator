@@ -26,13 +26,10 @@ export function InvoicePreview({
         </div>
         <div>
           <h2>{invoice.business.name || "Your business"}</h2>
-          <p>Fine impressions. Lasting relationships.</p>
         </div>
       </header>
       <div className="flex items-center justify-between py-7 [&_h3]:font-heading [&_h3]:text-[49px] [&_h3]:leading-none [&_h3]:font-normal [&_h3]:tracking-[-2px] max-[600px]:[&_h3]:text-[43px] [&_h3_span]:text-primary [&>div]:flex [&>div]:flex-col [&>div]:gap-1.5 [&>div]:text-right [&>div]:text-[11px] [&>div>span]:text-[8px] [&>div>span]:text-muted-foreground">
-        <h3>
-          Invoice<span>.</span>
-        </h3>
+        <h3>Invoice</h3>
         <div>
           <span>Invoice number</span>
           <strong>{invoice.invoiceNumber || "Untitled"}</strong>
@@ -40,7 +37,7 @@ export function InvoicePreview({
       </div>
       <div className="mb-[25px] grid grid-cols-2 gap-6 text-[10px] leading-[1.7] max-[600px]:gap-[15px] max-[600px]:text-[9px] [&_strong]:font-semibold [&_p]:mt-1.5 [&_p]:whitespace-pre-line">
         <section>
-          <h4>From the studio</h4>
+          <h4>From</h4>
           <strong>{invoice.business.name}</strong>
           <p>{invoice.business.address}</p>
           <p>
@@ -50,7 +47,7 @@ export function InvoicePreview({
           </p>
         </section>
         <section>
-          <h4>Prepared for</h4>
+          <h4>Bill to</h4>
           <strong>{invoice.customer.name || "Customer name"}</strong>
           <p>{invoice.customer.address}</p>
           <p>{invoice.customer.email}</p>
@@ -99,9 +96,7 @@ export function InvoicePreview({
         </tbody>
       </table>
       {!invoice.lineItems.length && (
-        <p className="py-[25px] text-[11px]">
-          Your work deserves a good invoice. Add your first item.
-        </p>
+        <p className="py-[25px] text-[11px]">No line items added.</p>
       )}
       <div className="paper-summary flex justify-end pt-5 [&_dl]:w-[66%] [&_dl]:text-[10px] max-[600px]:[&_dl]:w-4/5 [&_dl>div]:flex [&_dl>div]:justify-between [&_dl>div]:gap-3 [&_dl>div]:py-1.5">
         <dl>
@@ -127,14 +122,10 @@ export function InvoicePreview({
       </div>
       {invoice.notes && (
         <section className="paper-notes max-w-[90%] pt-[34px] [&_p]:text-[9px] [&_p]:leading-[1.8] [&_p]:whitespace-pre-line">
-          <h4>A note from the studio</h4>
+          <h4>Payment terms & notes</h4>
           <p>{invoice.notes}</p>
         </section>
       )}
-      <footer className="paper-footer mt-[35px] flex items-center justify-between gap-3.5 border-t border-foreground pt-[15px] text-[8px] italic [&>span:last-child]:text-[25px] [&>span:last-child]:not-italic">
-        <span>Thank you for making something worth keeping.</span>
-        <span aria-hidden="true">✳</span>
-      </footer>
     </article>
   );
 }

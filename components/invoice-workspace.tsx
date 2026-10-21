@@ -79,7 +79,7 @@ const blank = (): InvoiceDraft => {
     customFields: [],
     discount: 0,
     taxRate: 0,
-    notes: "Thank you for your business. Payment is due on receipt.",
+    notes: "Payment is due on receipt.",
   };
 };
 export function InvoiceWorkspace() {
@@ -215,8 +215,7 @@ export function InvoiceWorkspace() {
     setEmail({
       to: draft.customer.email || "",
       subject: `Invoice ${draft.invoiceNumber} from ${draft.business.name}`,
-      message:
-        "Hello,\n\nHere is your invoice. Thank you for working with our studio.",
+      message: "Please find your invoice below.",
     });
     setEmailErrors({});
     setSendOpen(true);
@@ -261,7 +260,7 @@ export function InvoiceWorkspace() {
             q&q
           </span>
           <span>
-            Quoin & Quill<small>THE STUDIO LEDGER</small>
+            Quoin & Quill<small>Invoice generator</small>
           </span>
         </div>
         <div className="-mx-2 mt-12 mb-4 flex items-center gap-2.5 rounded bg-[#dce7e8] p-3 font-semibold max-[600px]:hidden">
@@ -305,7 +304,7 @@ export function InvoiceWorkspace() {
           {!invoices.length && !listError && (
             <div className="px-1 py-[35px] text-xs leading-relaxed text-muted-foreground max-[600px]:hidden [&_svg]:mb-2.5 [&_svg]:opacity-70 [&_p]:font-medium [&_p]:text-foreground">
               <FileText size={24} />
-              <p>A place for your paperwork.</p>
+              <p>No saved invoices.</p>
               <span>Save your first invoice and it will appear here.</span>
             </div>
           )}
@@ -323,9 +322,9 @@ export function InvoiceWorkspace() {
         <header className="workspace-header flex shrink-0 items-center justify-between gap-4 px-9 pt-[29px] pb-[25px] max-[1150px]:px-[25px] max-[600px]:block max-[600px]:px-5 max-[600px]:py-[23px] [&_h1]:mb-[9px] [&_h1]:font-heading [&_h1]:text-4xl [&_h1]:leading-[1.1] [&_h1]:font-medium [&_h1]:tracking-[-0.8px] max-[900px]:[&_h1]:text-[31px] max-[600px]:[&_h1]:text-[32px]">
           <div>
             <div className="mb-[21px] text-[11px] text-muted-foreground max-[600px]:mb-[17px] [&_span]:mx-3 [&_span]:text-[#8b9da4]">
-              Studio ledger <span>/</span> Invoices
+              Invoice generator <span>/</span> Invoices
             </div>
-            <h1>{id ? "Edit invoice" : "Make a good impression."}</h1>
+            <h1>{id ? "Edit invoice" : "New invoice"}</h1>
           </div>
           <div
             className="flex items-center whitespace-nowrap text-[11px] text-muted-foreground max-[900px]:text-[10px] max-[600px]:mt-[17px]"
@@ -428,7 +427,6 @@ export function InvoiceWorkspace() {
               <div className="editor-panel min-w-0 min-[901px]:overflow-y-auto min-[901px]:overscroll-contain border-r border-[#dce3e4] bg-[#fcfdfc] max-[900px]:data-[state=inactive]:hidden">
                 <div className="flex items-center justify-between gap-2 border-b border-[#e1e7e7] px-[26px] py-[23px] [&_h2]:text-[13px] [&_h2]:font-semibold [&_span]:text-[10px] [&_span]:text-muted-foreground">
                   <h2>Invoice details</h2>
-                  <span>Every detail counts.</span>
                 </div>
                 <fieldset className="m-0 min-w-0 border-0 p-0" disabled={busy}>
                   <InvoiceEditor
@@ -450,7 +448,8 @@ export function InvoiceWorkspace() {
                 </div>
                 <InvoicePreview invoice={draft} totals={totals} />
                 <p className="preview-footnote mt-[19px] text-center text-[10px] text-muted-foreground">
-                  Ready for paper. Use “Save as PDF” in your print dialog.
+                  Choose Save as PDF in the print dialog to download this
+                  invoice.
                 </p>
               </div>
             </TabsContent>
@@ -463,7 +462,7 @@ export function InvoiceWorkspace() {
       </div>
       <Dialog open={sendOpen} onOpenChange={setSendOpen}>
         <DialogContent>
-          <DialogTitle>Send a little good work.</DialogTitle>
+          <DialogTitle>Send invoice</DialogTitle>
           <DialogDescription>
             Your saved invoice will be included in the email body.
           </DialogDescription>
@@ -504,8 +503,7 @@ export function InvoiceWorkspace() {
         <AlertDialogContent>
           <AlertDialogTitle>Delete this invoice?</AlertDialogTitle>
           <AlertDialogDescription>
-            This permanently deletes {draft.invoiceNumber} from the studio
-            ledger.
+            This permanently deletes invoice {draft.invoiceNumber}.
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={busy}>Keep invoice</AlertDialogCancel>
@@ -526,7 +524,7 @@ export function InvoiceWorkspace() {
         }}
       >
         <AlertDialogContent>
-          <AlertDialogTitle>Leave your changes behind?</AlertDialogTitle>
+          <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
           <AlertDialogDescription>
             You have unsaved edits. Save the invoice first if you want to keep
             them.

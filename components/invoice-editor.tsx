@@ -148,7 +148,7 @@ export function InvoiceEditor({
   );
   return (
     <div>
-      <EditorSection number="01" title="The essentials">
+      <EditorSection number="01" title="Invoice information">
         {field("invoiceNumber", "Invoice number")}
         <div className="mb-4 min-w-0">
           <Label htmlFor="payment-terms">Payment schedule</Label>
@@ -181,14 +181,14 @@ export function InvoiceEditor({
           {field("dueDate", "Due date", "date")}
         </div>
       </EditorSection>
-      <EditorSection number="02" title="Your customer">
+      <EditorSection number="02" title="Customer details">
         {party("customer", "name", "Customer name")}
         {party("customer", "email", "Customer email")}
         {party("customer", "address", "Billing address", true)}
       </EditorSection>
       <EditorSection
         number="03"
-        title="The work"
+        title="Line items"
         count={draft.lineItems.length}
       >
         {draft.lineItems.map((line, i) => (
@@ -242,7 +242,7 @@ export function InvoiceEditor({
         ))}
         {!draft.lineItems.length && (
           <p className="mb-[18px] text-[11px] leading-[1.7] text-muted-foreground">
-            Start with the work you did. Add a product or service below.
+            Add a line item to include a product or service.
           </p>
         )}
         {errors.lineItems && (
@@ -276,7 +276,7 @@ export function InvoiceEditor({
           {field("taxRate", "Tax rate (%)", "number")}
         </div>
       </EditorSection>
-      <EditorSection number="04" title="A little more detail">
+      <EditorSection number="04" title="Notes & custom fields">
         {field("notes", "Payment terms & notes", "text", true)}
         <p className="mb-[18px] text-[11px] leading-[1.7] text-muted-foreground">
           Custom fields appear on your invoice. Keep internal details hidden.
@@ -356,7 +356,7 @@ export function InvoiceEditor({
           Add custom field
         </Button>
       </EditorSection>
-      <EditorSection number="05" title="Your studio">
+      <EditorSection number="05" title="Business details">
         {party("business", "name", "Business name")}
         {party("business", "address", "Business address", true)}
         {party("business", "email", "Business email")}
