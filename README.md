@@ -1,6 +1,6 @@
 # Studio Ledger — Quoin & Quill
 
-A customizable invoice workspace for a fictional letterpress studio. Edit an invoice beside a live typeset preview, save it locally, reload it, print a PDF, and email the saved document.
+A customizable invoice workspace for a fictional letterpress studio. Edit an invoice beside a live typeset preview, save it locally, reload it, download a PDF, and email the saved document.
 
 ![Screenshot placeholder — add a desktop editor and preview capture](docs/screenshot.png)
 
@@ -35,14 +35,15 @@ To test safely, load the fictional sample, save it, open Send to customer, and r
 
 ## API
 
-| Method | Endpoint               | Result                                               |
-| ------ | ---------------------- | ---------------------------------------------------- |
-| GET    | /api/invoices          | Saved summaries                                      |
-| POST   | /api/invoices          | Validate and create; 201                             |
-| GET    | /api/invoices/:id      | Complete saved invoice                               |
-| PUT    | /api/invoices/:id      | Validate and replace                                 |
-| DELETE | /api/invoices/:id      | Delete; 204                                          |
-| POST   | /api/invoices/:id/send | Send saved invoice; body: `{to, subject?, message?}` |
+| Method | Endpoint               | Result                                                |
+| ------ | ---------------------- | ----------------------------------------------------- |
+| GET    | /api/invoices          | Saved summaries                                       |
+| POST   | /api/invoices          | Validate and create; 201                              |
+| GET    | /api/invoices/:id      | Complete saved invoice                                |
+| PUT    | /api/invoices/:id      | Validate and replace                                  |
+| DELETE | /api/invoices/:id      | Delete; 204                                           |
+| POST   | /api/invoices/:id/send | Send saved invoice; body: `{to, subject?, message?}`  |
+| POST   | /api/invoices/pdf      | Download current invoice JSON as a PDF; does not save |
 
 Create/update accept the invoice itself, with business, customer, invoiceNumber, issueDate, dueDate, notes, lineItems, discount, taxRate, and customFields. IDs on line items/custom fields are stable strings. Invalid input returns 400 with `errors` keyed by field path; missing invoices return 404. Server failures return a generic error without leaking credentials.
 
@@ -54,7 +55,7 @@ Multiply quantity by unit price and round each line to cents, sum those rounded 
 
 Newsreader brings the letterpress character; Geist keeps the controls readable. Ink #182D35, paper #FFFEF9, slate #657780, ledger grey #E7ECEC, blue #245C73, and error red #A33030. The invoice is the focal point; the surrounding ledger is deliberately quiet. Radix-backed project UI primitives supply dialogs, confirmation, switches, and tabs; existing unused setup components remain available.
 
-Next.js Route Handlers keep the app in one process. SQLite keeps setup small and persistence inspectable. Server recomputation prevents forged totals. `window.print()` uses the browser's PDF output with a dedicated Letter print stylesheet; choose Save as PDF and turn browser headers/footers off. Long documents can span pages.
+Next.js Route Handlers keep the app in one process. SQLite keeps setup small and persistence inspectable. Server recomputation prevents forged totals. PDF downloads use a Node.js Route Handler and React PDF to generate a selectable-text Letter document from the current validated draft, without saving it or opening a print dialog. Fonts are embedded from local packages, totals are recomputed, hidden custom fields are excluded, and long invoices flow across pages. Native browser printing remains supported through the print stylesheet.
 
 SQLite needs persistent disk and a single app instance: use a persistent volume on Railway, Render, or Fly.io. An ephemeral Vercel serverless disk is unsuitable. Turso or Postgres would be appropriate alternatives for a distributed deployment.
 
@@ -66,7 +67,7 @@ AI tools used: Codex continued the supplied project setup, implemented the backe
 
 Time spent: **[fill in]**.
 
-Known limitations: browser print pagination varies, no PDF attachment, no email delivery tracking, no multi-user access, and no automated browser tests. SMTP delivery requires your own configuration.
+Known limitations: PDF and browser-preview layout can differ slightly, no PDF attachment, no email delivery tracking, no multi-user access, and no automated browser tests. SMTP delivery requires your own configuration.
 
 ## Verification handoff
 
@@ -80,3 +81,5 @@ Suggested separate commit messages:
 1. `feat: add SQLite invoice API and SMTP delivery`
 2. `feat: build letterpress invoice editor and printable preview`
 3. `docs: document setup, verification, and deployment trade-offs`
+
+PDF export verification: generated and visually inspected a one-page sample invoice and a six-page, 70-line invoice. Checked totals, hidden-field exclusion, text bounds, attachment headers, invalid-input errors, and deployment font tracing.

@@ -1,4 +1,8 @@
 import { InvoiceWorkspace } from "@/components/invoice-workspace";
-export default function Home() {
-  return <InvoiceWorkspace />;
+import { connection } from "next/server";
+import { createBlankInvoice } from "@/lib/new-invoice";
+
+export default async function Home() {
+  await connection();
+  return <InvoiceWorkspace initialInvoice={createBlankInvoice()} />;
 }

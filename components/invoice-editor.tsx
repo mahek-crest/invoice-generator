@@ -1,5 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { InvoiceDraft } from "@/lib/schemas";
 import { Input } from "@/components/ui/input";
@@ -32,14 +33,27 @@ export function Field({
   multiline?: boolean;
   type?: string;
 }) {
+  const [negativeAttempt, setNegativeAttempt] = useState(false);
+  const error = negativeAttempt
+    ? `${label} must be zero or greater.`
+    : errors[name];
+  const rejectsNegative = (text: string) => {
+    if (type !== "number" || !/[-\u2212]/.test(text)) return false;
+    setNegativeAttempt(true);
+    return true;
+  };
   const props = {
     id: name,
     value: value ?? "",
     onChange: (
       event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    ) => onChange(event.target.value),
-    "aria-invalid": Boolean(errors[name]),
-    "aria-describedby": errors[name] ? `${name}-error` : undefined,
+    ) => {
+      if (rejectsNegative(event.target.value)) return;
+      setNegativeAttempt(false);
+      onChange(event.target.value);
+    },
+    "aria-invalid": Boolean(error),
+    "aria-describedby": error ? `${name}-error` : undefined,
   };
   return (
     <div className="mb-4 min-w-0">
@@ -51,15 +65,37 @@ export function Field({
           {...props}
           type={type}
           inputMode={type === "number" ? "decimal" : undefined}
+          min={type === "number" ? 0 : undefined}
           step={type === "number" ? "any" : undefined}
+          onFocus={() => setNegativeAttempt(false)}
+          onKeyDown={(event) => {
+            if (
+              !event.ctrlKey &&
+              !event.metaKey &&
+              !event.altKey &&
+              rejectsNegative(event.key)
+            ) {
+              event.preventDefault();
+            }
+          }}
+          onBeforeInput={(event) => {
+            const data = (event.nativeEvent as InputEvent).data;
+            if (data && rejectsNegative(data)) event.preventDefault();
+          }}
+          onPaste={(event) => {
+            if (rejectsNegative(event.clipboardData.getData("text"))) {
+              event.preventDefault();
+            }
+          }}
         />
       )}{" "}
-      {errors[name] && (
+      {error && (
         <p
           className="mt-1.5 text-[11px] leading-relaxed text-destructive"
           id={`${name}-error`}
+          role="status"
         >
-          {errors[name]}
+          {error}
         </p>
       )}
     </div>

@@ -39,6 +39,7 @@ import {
 import { InvoiceEditor, Field } from "./invoice-editor";
 import { InvoicePreview } from "./invoice-preview";
 import { createSampleInvoice } from "@/lib/sample-invoice";
+import { createBlankInvoice } from "@/lib/new-invoice";
 import {
   fieldErrorMap,
   invoiceSchema,
@@ -63,35 +64,22 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
     throw new Error(body.error || "Something went wrong. Please try again.");
   return body;
 }
-const blank = (): InvoiceDraft => {
-  const sample = createSampleInvoice();
-  const today = new Date();
-  const date = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 10);
-  return {
-    ...sample,
-    invoiceNumber: `QQ-${today.getTime().toString().slice(-6)}`,
-    issueDate: date,
-    dueDate: date,
-    customer: { name: "", email: "", address: "" },
-    lineItems: [],
-    customFields: [],
-    discount: 0,
-    taxRate: 0,
-    notes: "Payment is due on receipt.",
-  };
-};
-export function InvoiceWorkspace() {
-  const [draft, setDraft] = useState<InvoiceDraft>(createSampleInvoice);
+
+export function InvoiceWorkspace({
+  initialInvoice,
+}: {
+  initialInvoice: InvoiceDraft;
+}) {
+  const [draft, setDraft] = useState<InvoiceDraft>(initialInvoice);
   const [id, setId] = useState<string>();
   const [baseline, setBaseline] = useState(() =>
-    JSON.stringify(createSampleInvoice()),
+    JSON.stringify(initialInvoice),
   );
   const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
   const [listError, setListError] = useState("");
   const [validate, setValidate] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [tab, setTab] = useState("edit");
   const [sendOpen, setSendOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -200,7 +188,7 @@ export function InvoiceWorkspace() {
     try {
       await api(`/api/invoices/${id}`, { method: "DELETE" });
       setDeleteOpen(false);
-      replace(blank());
+      replace(createBlankInvoice());
       await refresh();
       notify("Invoice deleted.");
     } catch (error) {
@@ -240,14 +228,48 @@ export function InvoiceWorkspace() {
       setBusy(false);
     }
   }
-  function print() {
+  async function downloadPdf() {
     setValidate(true);
     if (!parsed.success) {
       setTab("edit");
-      notify("Check the highlighted fields before printing.", true);
+      notify("Check the highlighted fields before downloading.", true);
       return;
     }
-    window.print();
+    setBusy(true);
+    setDownloading(true);
+    try {
+      const response = await fetch("/api/invoices/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(
+          error.error || "Could not generate the PDF. Please try again.",
+        );
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const number =
+        parsed.data.invoiceNumber
+          .replace(/[^a-zA-Z0-9_-]/g, "-")
+          .slice(0, 80) || "invoice";
+      link.download = `invoice-${number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // Let the browser start reading the file before releasing its object URL.
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      notify("PDF download started.");
+    } catch (error) {
+      notify((error as Error).message, true);
+    } finally {
+      setBusy(false);
+      setDownloading(false);
+    }
   }
   return (
     <div className="workspace flex min-h-screen min-[901px]:h-dvh min-[901px]:overflow-hidden max-[600px]:block">
@@ -272,7 +294,7 @@ export function InvoiceWorkspace() {
           variant="outline"
           className="w-full bg-transparent max-[600px]:w-auto"
           disabled={busy}
-          onClick={() => guard(() => replace(blank()))}
+          onClick={() => guard(() => replace(createBlankInvoice()))}
         >
           <Plus size={16} />
           New invoice
@@ -387,13 +409,21 @@ export function InvoiceWorkspace() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" disabled={busy} onClick={print}>
-                    <Download size={16} />
-                    Download PDF
+                  <Button
+                    variant="outline"
+                    disabled={busy}
+                    onClick={downloadPdf}
+                  >
+                    {downloading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Download size={16} />
+                    )}
+                    {downloading ? "Generating PDF…" : "Download PDF"}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Opens the print dialog. Choose Save as PDF.
+                  Download the current invoice as a PDF file.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -402,7 +432,7 @@ export function InvoiceWorkspace() {
               Send to customer
             </Button>
             <Button disabled={busy} onClick={() => void save()}>
-              {busy ? (
+              {busy && !downloading ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (
                 <Save size={16} />
@@ -448,8 +478,8 @@ export function InvoiceWorkspace() {
                 </div>
                 <InvoicePreview invoice={draft} totals={totals} />
                 <p className="preview-footnote mt-[19px] text-center text-[10px] text-muted-foreground">
-                  Choose Save as PDF in the print dialog to download this
-                  invoice.
+                  Download PDF includes the current invoice details and visible
+                  custom fields.
                 </p>
               </div>
             </TabsContent>
